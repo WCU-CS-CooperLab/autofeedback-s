@@ -5,6 +5,7 @@ import * as core from '@actions/core'
 import {setCheckRunOutput} from './output'
 import * as os from 'os'
 import chalk from 'chalk'
+import {fuzzySearch} from './fuzzySearch'
 
 const color = new chalk.Instance({level: 1})
 
@@ -215,7 +216,7 @@ const runCommand = async (test: Test, cwd: string, timeout: number) => {
   const expected = normalizeLineEndings(test.output || '')
   const actual = normalizeLineEndings(output)
 
-  const diffMessage = (actual: string, expected: string): string => {
+  const exactDiffMessage = (actual: string, expected: string): string => {
     const linesActual = actual.split(/\r?\n/)
     const linesExpected = expected.split(/\r?\n/)
     const minLines = Math.min(linesActual.length, linesExpected.length)
@@ -230,7 +231,7 @@ const runCommand = async (test: Test, cwd: string, timeout: number) => {
     result.push(`Num lines to test ` + linesExpected.length)
     result.push(`  Num lines total ` + linesActual.length)
     if (linesExpected.length > linesActual.length) {
-      result.push(` mising ` + (linesExpected.length - linesActual.length) + ` lines of output`)
+      result.push(` missing ` + (linesExpected.length - linesActual.length) + ` lines of output`)
     } else if (linesExpected.length < linesActual.length) {
       result.push(` extra ` + (linesActual.length - linesExpected.length) + ` lines of output`)
     } else {
@@ -243,9 +244,8 @@ const runCommand = async (test: Test, cwd: string, timeout: number) => {
 
     result.push(``)
     // Look at each line
-    let i
     if (linesExpected.length == linesActual.length) {
-      for (i = 0; i < minLines; i++) {
+      for (let i = 0; i < minLines; i++) {
         expectedLine = linesExpected[i]
         actualLine = linesActual[i]
 
@@ -297,11 +297,43 @@ const runCommand = async (test: Test, cwd: string, timeout: number) => {
     return result.join(os.EOL)
   }
 
+  const includedDiffMessage = (actual: string, expected: string): string => {
+    const actualLines = actual.split(/\r?\n/)
+
+    const result = ['  ']
+    result.push('')
+    result.push('Full program output:')
+    result.push(actual)
+    result.push('')
+    result.push('Included string expected for this test:')
+    result.push(expected)
+    result.push('')
+
+    const closest = fuzzySearch(actual, expected)
+    result.push(`🟥------- Expected text not found `)
+    result.push('')
+    result.push('🟥EXPECTED: "' + expected + '"')
+
+    // We do not want to consider line endings in the number in character counts
+    const closestIndex = actual.replace(/\r?\n/g, '').indexOf(closest)
+    let charCount = 0
+    let currLine = 1
+    while (charCount < closestIndex) {
+      charCount += actualLines[currLine - 1].length
+      currLine++
+    }
+
+    result.push('🟥 CLOSEST: "' + closest + '" starting on line ' + currLine + ' pos ' + closestIndex)
+    result.push('')
+
+    return result.join(os.EOL)
+  }
+
   switch (test.comparison) {
     case 'exact':
       if (actual != expected) {
         //core.group(`Error: ${test.name}`, async() => {
-        const result = diffMessage(actual, expected)
+        const result = exactDiffMessage(actual, expected)
         throw new TestError(`The output for test ${test.name} does not match:
 ${result}`)
         //throw new TestOutputError(`The output for test ${test.name} did not match`, expected, actual)
@@ -320,7 +352,7 @@ ${result}`)
       // The default comparison mode is 'included'
       if (!actual.includes(expected)) {
         //core.group(`Error: ${test.name}`, async() => {
-        const result = diffMessage(actual, expected)
+        const result = includedDiffMessage(actual, expected)
         throw new TestError(`The output for test ${test.name} did not match:
 ${result}`)
         //throw new TestOutputError(`The output for test ${test.name} did not match`, expected, actual)
