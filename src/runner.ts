@@ -206,11 +206,10 @@ const runCommand = async (test: Test, cwd: string, timeout: number) => {
     child.stdin.end()
   }
   try {
-     await waitForExit(child, timeout)
+    await waitForExit(child, timeout)
   } catch (error) {
     if (error instanceof TestTimeoutError) {
       throw new TestTimeoutError(`${output}\n${error.message}`)
-
     } else if (error instanceof TestError) {
       throw new TestError(`${output}\n${error.message}`)
     } else if (error instanceof Error) {
