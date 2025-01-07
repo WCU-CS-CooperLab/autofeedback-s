@@ -13722,7 +13722,23 @@ const runCommand = async (test, cwd, timeout) => {
         child.stdin.write(test.input);
         child.stdin.end();
     }
-    await waitForExit(child, timeout);
+    try {
+        await waitForExit(child, timeout);
+    }
+    catch (error) {
+        if (error instanceof TestTimeoutError) {
+            throw new TestTimeoutError(`${output}\n${error.message}`);
+        }
+        else if (error instanceof TestError) {
+            throw new TestError(`${output}\n${error.message}`);
+        }
+        else if (error instanceof Error) {
+            throw new Error(`${output}\n${error.message}`);
+        }
+        else {
+            throw new Error(`${output}\nUnknown ERROR`);
+        }
+    }
     // Eventually work off the the test type
     if ((!test.output || test.output == '') && (!test.input || test.input == '')) {
         return output;
