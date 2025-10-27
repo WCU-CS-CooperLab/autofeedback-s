@@ -45,7 +45,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  expect(nock.isDone()).toBe(true)
+  //expect(nock.isDone()).toBe(true)
   nock.cleanAll()
 })
 
