@@ -34,7 +34,7 @@ describe('output', () => {
 
     nock('https://api.github.com', {
       reqheaders: {
-        'authorization': /Bearer .+/, // Matches "Bearer " followed by any characters
+        authorization: /Bearer .+/, // Matches "Bearer " followed by any characters
       }
     })
       .get('/repos/example/repository/check-suites/111111/check-runs?check_name=Autograding')
@@ -51,7 +51,7 @@ describe('output', () => {
   it('matches included output', async () => {
     nock('https://api.github.com', {
       reqheaders: {
-        'authorization': /Bearer .+/, // Matches "Bearer " followed by any characters
+        authorization: /Bearer .+/, // Matches "Bearer " followed by any characters
       }
     })
       .patch(`/repos/example/repository/check-runs/222222`, (body) => {
