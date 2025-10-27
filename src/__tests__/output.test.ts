@@ -1,15 +1,7 @@
 import * as core from '@actions/core'
+import * as github from '@actions/github'
 import {setCheckRunOutput} from '../output'
 import nock from 'nock'
-
-// Mock Octokit to prevent real API calls
-jest.mock('@octokit/rest', () => {
-  return {
-    Octokit: jest.fn().mockImplementation(() => ({
-      request: jest.fn().mockResolvedValue({}),
-    })),
-  }
-})
 
 beforeEach(() => {
   jest.resetModules()
@@ -26,6 +18,30 @@ beforeEach(() => {
 
   process.env['GITHUB_REPOSITORY'] = 'example/repository'
   process.env['GITHUB_RUN_ID'] = '98765'
+
+  // Mock GitHub client
+  const mockOctokit = {
+    rest: {
+      actions: {
+        getWorkflowRun: jest.fn().mockResolvedValue({
+          data: {
+            check_suite_url: 'https://api.github.com/repos/example/repository/check-suites/111111',
+          },
+        }),
+      },
+      checks: {
+        listForSuite: jest.fn().mockResolvedValue({
+          data: {
+            total_count: 1,
+            check_runs: [{id: 222222}],
+          },
+        }),
+        update: jest.fn().mockResolvedValue({}),
+      },
+    },
+  }
+
+  jest.spyOn(github, 'getOctokit').mockReturnValue(mockOctokit as any)
 })
 
 afterEach(() => {
@@ -34,32 +50,8 @@ afterEach(() => {
 })
 
 describe('output', () => {
-  beforeEach(() => {
-    nock('https://api.github.com').get('/repos/example/repository/actions/runs/98765').reply(200, {
-      check_suite_url: 'https://api.github.com/repos/example/repository/check-suites/111111',
-    })
-    nock('https://api.github.com', {
-      reqheaders: {
-        authorization: /Bearer .+/,
-      },
-    })
-      .get('/repos/example/repository/check-suites/111111/check-runs?check_name=Autograding')
-      .reply(200, {
-        total_count: 1,
-        check_runs: [
-          {
-            id: 222222,
-          },
-        ],
-      })
-  })
-
   it('matches included output', async () => {
-    nock('https://api.github.com', {
-      reqheaders: {
-        authorization: /Bearer .+/,
-      },
-    })
+    nock('https://api.github.com')
       .patch('/repos/example/repository/check-runs/222222', (body) => {
         if (body.output?.text !== 'Dogs on parade') return false
         if (!body.output?.annotations || body.output.annotations[0]?.message !== 'Dogs on parade') return false
