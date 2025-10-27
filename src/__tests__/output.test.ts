@@ -32,7 +32,11 @@ describe('output', () => {
       check_suite_url: 'https://api.github.com/repos/example/repository/check-suites/111111',
     })
 
-    nock('https://api.github.com')
+    nock('https://api.github.com', {
+  reqheaders: {
+    'authorization': /Bearer .+/, // Matches "Bearer " followed by any characters
+  }
+})
       .get('/repos/example/repository/check-suites/111111/check-runs?check_name=Autograding')
       .reply(200, {
         total_count: 1,
@@ -45,7 +49,11 @@ describe('output', () => {
   })
 
   it('matches included output', async () => {
-    nock('https://api.github.com')
+    nock('https://api.github.com', {
+  reqheaders: {
+    'authorization': /Bearer .+/, // Matches "Bearer " followed by any characters
+  }
+})
       .patch(`/repos/example/repository/check-runs/222222`, (body) => {
         if (body.output.text !== 'Dogs on parade') return false
         if (body.output.annotations[0].message !== 'Dogs on parade') return false
