@@ -14,6 +14,7 @@ beforeEach(() => {
   jest.spyOn(core, 'setOutput').mockImplementation(() => {
     return
   })
+  jest.mock('@octokit/rest', () => {  return {    Octokit: jest.fn().mockImplementation(() => ({      request: jest.fn().mockResolvedValue({}),    })),  }})
   process.env['GITHUB_REPOSITORY'] = 'example/repository'
   process.env['GITHUB_RUN_ID'] = '98765'
 })
