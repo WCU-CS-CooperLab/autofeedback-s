@@ -35,12 +35,10 @@ afterEach(() => {
 
 describe('output', () => {
   beforeEach(() => {
-    nock('https://api.github.com')
-      .get('/repos/example/repository/actions/runs/98765')
+    nock('https://api.github.com').get('/repos/example/repository/actions/runs/98765')
       .reply(200, {
         check_suite_url: 'https://api.github.com/repos/example/repository/check-suites/111111',
       })
-
     nock('https://api.github.com', {
       reqheaders: {
         authorization: /Bearer .+/,
