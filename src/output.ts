@@ -57,8 +57,8 @@ export const setCheckRunOutput = async (
   // Split text into chunks of 65,000 characters max
   const maxChars = 65000
   const chunks: string[] = []
-  for (let i = 0; i < text.length; i += MAX_CHARS) {
-    chunks.push(text.substring(i, i + MAX_CHARS))
+  for (let i = 0; i < text.length; i += maxChars) {
+    chunks.push(text.substring(i, i + maxChars))
   }
 
   // Create annotations from chunks
