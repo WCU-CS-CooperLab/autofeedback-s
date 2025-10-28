@@ -22,6 +22,7 @@ export const setCheckRunOutput = async (
   const octokit = github.getOctokit(token)
   if (!octokit) return
 
+  
   // The environment contains a variable for current repository. The repository
   // will be formatted as a name with owner (`nwo`); e.g., jeffrafter/example
   // We'll split this into two separate variables for later use
@@ -54,6 +55,24 @@ export const setCheckRunOutput = async (
   const checkRun = checkRunsResponse.data.total_count === 1 && checkRunsResponse.data.check_runs[0]
   if (!checkRun) return
 
+  // Split text into chunks of 65,000 characters max
+  const MAX_CHARS = 65000
+  const chunks: string[] = []
+  for (let i = 0; i < text.length; i += MAX_CHARS) {
+    chunks.push(text.substring(i, i + MAX_CHARS))
+  }
+
+  // Create annotations from chunks
+  const annotations = chunks.map((chunk, index) => ({
+    path: '.github',
+    start_line: 1,
+    end_line: 1,
+    annotation_level: level,
+    message: chunk,
+    title: `Autograding ${suffix} (${index + 1}/${chunks.length})`,
+  }))
+
+  
   // Update the checkrun, we'll assign the title, summary and text even though we expect
   // the title and summary to be overwritten by GitHub Actions (they are required in this call)
   // We'll also store the total in an annotation to future-proof
@@ -63,19 +82,9 @@ export const setCheckRunOutput = async (
     check_run_id: checkRun.id,
     output: {
       title: 'Autograding',
-      summary: text,
+      summary: text.substring(0,1000),
       text: text,
-      annotations: [
-        {
-          // Using the `.github` path is what GitHub Actions does
-          path: '.github',
-          start_line: 1,
-          end_line: 1,
-          annotation_level: level,
-          message: text,
-          title: `Autograding ${suffix}`,
-        },
-      ],
+      annotations,
     },
   })
 }
