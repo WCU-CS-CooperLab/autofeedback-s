@@ -81,7 +81,7 @@ export const setCheckRunOutput = async (
     output: {
       title: 'Autograding',
       summary: text.substring(0, 1000),
-      text: text.substring(0,maxChars),
+      text: text.substring(0, maxChars),
       annotations,
     },
   })
