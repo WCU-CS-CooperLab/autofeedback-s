@@ -443,7 +443,7 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
       let notice = `🏁 Passed ${test.name}\n`
       notice += '\n' + result + '\n'
       //core.notice(notice, nAnn)
-      await setCheckRunOutput(notice.substring(0,maxChars), test.name)
+      await setCheckRunOutput(notice.substring(0, maxChars), test.name)
 
       if (test.points) {
         points += test.points
