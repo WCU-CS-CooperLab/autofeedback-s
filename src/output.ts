@@ -71,6 +71,13 @@ export const setCheckRunOutput = async (
     title: `Autograding ${suffix} (${index + 1}/${chunks.length})`,
   }))
 
+  console.log('Length of output.text:', text.substring(0, MAX_CHARS).length)
+  console.log('Length of output.summary:', text.substring(0, MAX_CHARS).length)
+  console.log('Number of annotations:', annotations.length)
+  annotations.forEach((annotation, index) => {
+    console.log(`Annotation ${index + 1} length:`, annotation.message.length)
+  })
+
   // Update the checkrun, we'll assign the title, summary and text even though we expect
   // the title and summary to be overwritten by GitHub Actions (they are required in this call)
   // We'll also store the total in an annotation to future-proof
