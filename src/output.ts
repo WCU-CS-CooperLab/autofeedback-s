@@ -73,10 +73,10 @@ export const setCheckRunOutput = async (
     title: `Autograding ${suffix} (${index + 1}/${chunks.length})`,
   }))
 
-  process.stdout.write(`setCheckRunOutput called\n`)
-  process.stdout.write(`Original text length: ${text.length}\n`)
-  process.stdout.write(`Truncated output.text length: ${text.substring(0, maxChars).length}\n`)
-  process.stdout.write(`Number of annotations: ${annotations.length}\n`)
+  //process.stdout.write(`setCheckRunOutput called\n`)
+  //process.stdout.write(`Original text length: ${text.length}\n`)
+  //process.stdout.write(`Truncated output.text length: ${text.substring(0, maxChars).length}\n`)
+  //process.stdout.write(`Number of annotations: ${annotations.length}\n`)
   annotations.forEach((annotation, index) => {
     process.stdout.write(`Annotation ${index + 1} length: ${annotation.message.length}\n`)
   })
