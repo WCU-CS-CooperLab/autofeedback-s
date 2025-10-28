@@ -1,6 +1,5 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import {log} from 'runner'
 
 export const setCheckRunOutput = async (
   text: string,
@@ -76,7 +75,7 @@ export const setCheckRunOutput = async (
 
   process.stdout.write(`setCheckRunOutput called\n`)
   process.stdout.write(`Original text length: ${text.length}\n`)
-  process.stdout.write(`Truncated output.text length: ${text.substring(0, MAX_CHARS).length}\n`)
+  process.stdout.write(`Truncated output.text length: ${text.substring(0, maxChars).length}\n`)
   process.stdout.write(`Number of annotations: ${annotations.length}\n`)
   annotations.forEach((annotation, index) => {
     process.stdout.write(`Annotation ${index + 1} length: ${annotation.message.length}\n`)
