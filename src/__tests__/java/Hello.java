@@ -5,7 +5,7 @@ public class Hello {
     public static void main(String[] args) {
         String line;
         Scanner scanner = new Scanner(System.in);
-        File file = new File("input.txt);
+        File file = new File("input.txt");
         
         System.out.println("What is your name?");
         line = scanner.nextLine();
