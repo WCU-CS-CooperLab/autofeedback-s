@@ -445,7 +445,7 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
       //core.notice(notice, nAnn)
       log(`about to call setCheckRunOutput\n`)
       log(`Original text length: ${notice.length}\n`)
- 
+
       await setCheckRunOutput(notice.substring(0, maxChars), test.name)
 
       if (test.points) {
