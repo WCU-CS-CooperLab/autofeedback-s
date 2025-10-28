@@ -1,5 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
+import {log} from 'runner'
 
 export const setCheckRunOutput = async (
   text: string,
@@ -7,7 +8,9 @@ export const setCheckRunOutput = async (
   level: 'failure' | 'notice' | 'warning' = 'notice',
 ): Promise<void> => {
   // If we have nothing to output, then bail
-  if (text === '') return
+  if (text === '') {
+    return
+  }
   const legalNotices = ['notice', 'error', 'warning']
   if (!level || !legalNotices.includes(level)) {
     level = 'notice'
@@ -71,11 +74,12 @@ export const setCheckRunOutput = async (
     title: `Autograding ${suffix} (${index + 1}/${chunks.length})`,
   }))
 
-  console.log('Length of output.text:', text.substring(0, maxChars).length)
-  console.log('Length of output.summary:', text.substring(0, maxChars).length)
-  console.log('Number of annotations:', annotations.length)
+  process.stdout.write(`setCheckRunOutput called\n`)
+  process.stdout.write(`Original text length: ${text.length}\n`)
+  process.stdout.write(`Truncated output.text length: ${text.substring(0, MAX_CHARS).length}\n`)
+  process.stdout.write(`Number of annotations: ${annotations.length}\n`)
   annotations.forEach((annotation, index) => {
-    console.log(`Annotation ${index + 1} length:`, annotation.message.length)
+    process.stdout.write(`Annotation ${index + 1} length: ${annotation.message.length}\n`)
   })
 
   // Update the checkrun, we'll assign the title, summary and text even though we expect
