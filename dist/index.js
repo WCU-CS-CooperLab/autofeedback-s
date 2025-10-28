@@ -32938,10 +32938,10 @@ const setCheckRunOutput = async (text, suffix, level = 'notice') => {
         message: chunk,
         title: `Autograding ${suffix} (${index + 1}/${chunks.length})`,
     }));
-    process.stdout.write(`setCheckRunOutput called\n`);
-    process.stdout.write(`Original text length: ${text.length}\n`);
-    process.stdout.write(`Truncated output.text length: ${text.substring(0, maxChars).length}\n`);
-    process.stdout.write(`Number of annotations: ${annotations.length}\n`);
+    //process.stdout.write(`setCheckRunOutput called\n`)
+    //process.stdout.write(`Original text length: ${text.length}\n`)
+    //process.stdout.write(`Truncated output.text length: ${text.substring(0, maxChars).length}\n`)
+    //process.stdout.write(`Number of annotations: ${annotations.length}\n`)
     annotations.forEach((annotation, index) => {
         process.stdout.write(`Annotation ${index + 1} length: ${annotation.message.length}\n`);
     });
@@ -33370,7 +33370,6 @@ const runAll = async (tests, cwd) => {
     const failing = [];
     const summaryMsgs = [];
     const errMsgs = [];
-    const maxChars = 65000;
     for (const test of tests) {
         numtests += 1;
         log('');
@@ -33397,9 +33396,9 @@ const runAll = async (tests, cwd) => {
             let notice = `🏁 Passed ${test.name}\n`;
             notice += '\n' + result + '\n';
             //core.notice(notice, nAnn)
-            log(`about to call setCheckRunOutput\n`);
-            log(`Original text length: ${notice.length}\n`);
-            await (0, output_1.setCheckRunOutput)(notice.substring(0, maxChars), test.name);
+            //log(`about to call setCheckRunOutput\n`)
+            //log(`Original text length: ${notice.length}\n`)
+            await (0, output_1.setCheckRunOutput)(notice, test.name);
             if (test.points) {
                 points += test.points;
             }

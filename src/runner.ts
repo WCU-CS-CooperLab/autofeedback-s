@@ -412,7 +412,6 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
   const failing = []
   const summaryMsgs = []
   const errMsgs = []
-  const maxChars = 65000
 
   for (const test of tests) {
     numtests += 1
