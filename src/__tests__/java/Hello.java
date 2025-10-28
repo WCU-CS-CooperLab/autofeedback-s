@@ -14,7 +14,7 @@ public class Hello {
         try{
             Scanner fileScanner = new Scanner(file);
             while(fileScanner.hasNextLine()) {
-                System.out.println(file.nextLine());
+                System.out.println(fileScanner.nextLine());
             }
         } catch (Exception e) {
             e.printStackTrace();
