@@ -415,9 +415,11 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
   const errMsgs = []
 
   for (const test of tests) {
-    numtests += 1
+    
     if (test.extra) {
       numextra += 1
+    } else {
+      numtests += 1
     }
     log('')
     // https://help.github.com/en/actions/reference/development-tools-for-github-actions#stop-and-start-log-commands-stop-commands
@@ -454,17 +456,19 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
       if (test.points) {
         points += test.points
       }
-      passing.push(test.name)
-      passed += 1
+      
+      if (!test.extra) {
+         passing.push(test.name)
+         passed += 1
+      }
     } catch (error) {
       log('')
       // Restart command processing
       log('')
       log(`::${token}::`)
-
-      failing.push(test.name)
       log(color.yellow(`🚧 needs repair - ${test.name}`))
       if (!test.extra) {
+        failing.push(test.name)
         failed = true
         if (error instanceof Error) {
           let eMsg = `🚧 Needs Repair - ${test.name}\n`
@@ -550,12 +554,12 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
     //core.notice(text, {title: 'Autograding complete'})
   } else {
     // set the number of tests that passed
-    const text = `Points ${passed}/${numtests-numextra}`
+    const text = `Points ${passed}/${numtests}`
     //Passing tests: ${passing}
     //Failing tests: ${failing}`
     //log(color.bold.bgCyan.black(text))
     log(color.bold.bgCyan.black(text))
-    core.setOutput('Points', `${passed}/(${numtests-numextra}`)
+    core.setOutput('Points', `${passed}/(${numtests}`)
     await setCheckRunOutput(text, 'complete')
     //core.notice(text, {title: 'Autograding complete'})
   }
