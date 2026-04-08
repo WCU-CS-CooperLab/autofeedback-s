@@ -446,16 +446,16 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
       //core.notice(notice, nAnn)
       //log(`about to call setCheckRunOutput\n`)
       //log(`Original text length: ${notice.length}\n`)
-      
+
       await setCheckRunOutput(notice, test.name)
 
       if (test.points) {
         points += test.points
       }
-      
+
       if (!test.extra) {
-         passing.push(test.name)
-         passed += 1
+        passing.push(test.name)
+        passed += 1
       }
     } catch (error) {
       log('')
