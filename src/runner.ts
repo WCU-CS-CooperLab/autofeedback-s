@@ -405,6 +405,7 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
   let availablePoints = 0
   let passed = 0
   let numtests = 0
+  let numextra = 0
   let hasPoints = false
 
   let failed = false
@@ -415,6 +416,9 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
 
   for (const test of tests) {
     numtests += 1
+    if (test.extra) {
+      numextra += 1
+    }
     log('')
     // https://help.github.com/en/actions/reference/development-tools-for-github-actions#stop-and-start-log-commands-stop-commands
     const token = uuidv4()
@@ -546,12 +550,12 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
     //core.notice(text, {title: 'Autograding complete'})
   } else {
     // set the number of tests that passed
-    const text = `Points ${passed}/${numtests}`
+    const text = `Points ${passed}/${numtests-numextra}`
     //Passing tests: ${passing}
     //Failing tests: ${failing}`
     //log(color.bold.bgCyan.black(text))
     log(color.bold.bgCyan.black(text))
-    core.setOutput('Points', `${passed}/${numtests}`)
+    core.setOutput('Points', `${passed}/(${numtests-numextra}`)
     await setCheckRunOutput(text, 'complete')
     //core.notice(text, {title: 'Autograding complete'})
   }
