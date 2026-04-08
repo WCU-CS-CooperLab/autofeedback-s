@@ -405,7 +405,6 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
   let availablePoints = 0
   let passed = 0
   let numtests = 0
-  let numextra = 0
   let hasPoints = false
 
   let failed = false
@@ -415,10 +414,7 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
   const errMsgs = []
 
   for (const test of tests) {
-    
-    if (test.extra) {
-      numextra += 1
-    } else {
+    if (!test.extra) {
       numtests += 1
     }
     log('')
@@ -450,7 +446,7 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
       //core.notice(notice, nAnn)
       //log(`about to call setCheckRunOutput\n`)
       //log(`Original text length: ${notice.length}\n`)
-
+      
       await setCheckRunOutput(notice, test.name)
 
       if (test.points) {
