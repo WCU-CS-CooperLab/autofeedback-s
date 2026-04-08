@@ -11,14 +11,14 @@ public class Hello {
         line = scanner.nextLine();
         System.out.println("Hello " + line);
 
-        try{
-            Scanner fileScanner = new Scanner(file);
-            while(fileScanner.hasNextLine()) {
-                System.out.println(fileScanner.nextLine());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // try{
+        //     Scanner fileScanner = new Scanner(file);
+        //     while(fileScanner.hasNextLine()) {
+        //         System.out.println(fileScanner.nextLine());
+        //     }
+        // } catch (Exception e) {
+        //     e.printStackTrace();
+        // }
 
     }
 }
