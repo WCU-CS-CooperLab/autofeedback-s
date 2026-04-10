@@ -2,8 +2,6 @@ import * as core from '@actions/core'
 // output.ts
 import * as github from '@actions/github'
 
-
-
 export const setCheckRunOutput = async (
   text: string,
   suffix: string,
