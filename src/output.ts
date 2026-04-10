@@ -1,5 +1,8 @@
 import * as core from '@actions/core'
+// output.ts
 import * as github from '@actions/github'
+
+
 
 export const setCheckRunOutput = async (
   text: string,
@@ -21,7 +24,7 @@ export const setCheckRunOutput = async (
   if (!token || token === '') return
 
   // Create the octokit client
-  const octokit = github.getOctokit(token)
+  const octokit = (github as any).getOctokit(token)
   if (!octokit) return
 
   // The environment contains a variable for current repository. The repository
