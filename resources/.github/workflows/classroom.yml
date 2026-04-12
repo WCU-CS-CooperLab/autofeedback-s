@@ -11,20 +11,20 @@ jobs:
     name: Autograding
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
 
       # add id to action so outputs can be used
-      - uses: WCU-CS-CooperLab/autofeedback-s@v1.6
+      - uses: WCU-CS-CooperLab/autofeedback-s@v1.7
         id: autograder
         continue-on-error: true
 
-      - uses: ebrain-lab/split-by@master
+      - uses: winterjung/split@v2.1.0
         id: split
         with:
-           string: "${{ steps.autograder.outputs.points }}"
-           split-by: '/'
+          msg: "${{ steps.autograder.outputs.points }}"
+          separator: '/'
       
 
       # make dir for badges
@@ -34,7 +34,7 @@ jobs:
           mkdir -p .github/badges
       # make passed tests badge
       - name: passed tests badge
-        uses: emibcn/badge-action@v2.0.2
+        uses: emibcn/badge-action@v2.0.4
         id: pbadge
         with:
           label: 'Passed Tests'
@@ -49,7 +49,7 @@ jobs:
           path: '.github/badges/points.svg'
 
       - name: Upload badge as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: badge
           path: '.github/badges/points.svg'
@@ -72,7 +72,7 @@ jobs:
           force: true
       - name: not enough pass
         if: steps.split.outputs._0 < 4
-        run: echo "${{ steps.split.outputs._0 }} tests passed out of ${{steps.split.outputs._1}} is fewer than 4 passed tests, Check Run WCU-CS-CooperLab/autofeedback-s@v1.1 for feedback. " && exit 1
+        run: echo "${{ steps.split.outputs._0 }} tests passed out of ${{steps.split.outputs._1}} is fewer than 4 passed tests, Check Annotations for feedback. " && exit 1
       - name: enough pass
         if: steps.split.outputs._0 >= 4
-        run: echo "${{ steps.split.outputs._0 }} tests passed out of ${{steps.split.outputs._1}}, Check Run WCU-CS-CooperLab/autofeedback-s@v1.1 for feedback. "
+        run: echo "${{ steps.split.outputs._0 }} tests passed out of ${{steps.split.outputs._1}}, Check Annotations for feedback. "
