@@ -1,0 +1,122 @@
+name: Instructor's Assignment Feedback
+
+on: [push]
+
+jobs:
+  build:
+    name: Autograding
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - uses: actions/checkout@v6
+      - uses: haskell-actions/setup@v2.10.4
+        with:
+          ghc-version: 9.10.1
+          cabal-version: 3.12.1.0 
+
+      - name: Install dependencies
+        run: |
+          cabal install --lib tasty --package-env .
+          cabal install --lib tasty-hunit --package-env .
+
+      # make dir for badges
+      - name: badges branch and make dir
+        run: |
+          git checkout badges 2>/dev/null || git checkout -b badges
+          mkdir -p .github/badges
+      # make points badge
+      - name: can't compile badge
+        uses: emibcn/badge-action@v2.0.4
+        id: errorBadge
+        with:
+          label: 'Tests Compile'
+          status: 'failed'
+          color:  'red'
+          path: '.github/badges/points.svg'
+
+      - name: Upload error badge as artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ebadge
+          path: '.github/badges/points.svg'
+          if-no-files-found: error
+
+      # commit and push badge if score has changed
+      - name: Commit ebadge
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add '.github/badges/points.svg'
+          git commit -m "Add/Update badge"
+        continue-on-error: true
+      - name: Push badge commit
+        uses: ad-m/github-push-action@master
+        if: success()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: badges
+          force: true
+
+
+      - name: Compile, Build, Link for individual tests
+        run: |
+          ghc Prog6Tests
+          ghc -o test Prog6.o Prog6Tests.o
+
+      - uses: WCU-CS-CooperLab/autofeedback-s@v1.7
+        id: autograder
+        continue-on-error: true
+
+
+      - uses: winterjung/split@v2.1.0
+        id: split
+        with:
+          msg: "${{ steps.autograder.outputs.points }}"
+          separator: '/'
+      
+
+      
+      # make points badge
+      - name: points badge
+        uses: emibcn/badge-action@v2.0.4
+        id: pbadge
+        with:
+          label: 'Tests Passed'
+          status: ${{ steps.autograder.outputs.points }}
+          color: ${{
+             steps.split.outputs._0 > 37 && 'green'               ||
+             steps.split.outputs._0 > 32 && 'yellow,green' ||
+             steps.split.outputs._0 > 27 && 'yellow,yellow,green' ||
+             steps.split.outputs._0 > 20 && 'orange,yellow,yellow'  ||
+             steps.split.outputs._0 > 10 && 'orange,orange,yellow'  ||
+             'red' }}
+          path: '.github/badges/points.svg'
+
+      - name: Upload badge as artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: badge
+          path: '.github/badges/points.svg'
+          if-no-files-found: error
+
+      # commit and push badge if score has changed
+      - name: Commit badge
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add '.github/badges/points.svg'
+          git commit -m "Add/Update badge"
+        continue-on-error: true
+      - name: Push badge commit
+        uses: ad-m/github-push-action@master
+        if: success()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: badges
+          force: true
+      - name: not enough pass
+        if: steps.split.outputs._0 < 38
+        run: echo "${{ steps.split.outputs._0 }} tests passed out of ${{steps.split.outputs._1}} is fewer than 38 passed tests, Check Annotations for feedback. " && exit 1
+      - name: enough pass
+        if: steps.split.outputs._0 >= 38
+        run: echo "${{ steps.split.outputs._0 }} tests passed out of ${{steps.split.outputs._1}}, Check Annotations for feedback. "
