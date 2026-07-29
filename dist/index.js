@@ -33512,7 +33512,7 @@ const runAll = async (tests, cwd) => {
         //Failing tests: ${failing}`
         //log(color.bold.bgCyan.black(text))
         log(color.bold.bgCyan.black(text));
-        core.setOutput('Points', `${passed}/(${numtests}`);
+        core.setOutput('Points', `${passed}/${numtests}`);
         await (0, output_1.setCheckRunOutput)(text, 'complete');
         //core.notice(text, {title: 'Autograding complete'})
     }
