@@ -6,6 +6,10 @@ import {setCheckRunOutput} from './output'
 import * as os from 'os'
 import chalk from 'chalk'
 import {fuzzySearch} from './fuzzySearch'
+import * as fs from 'fs'
+import * as path from 'path';
+import * as artifact from '@actions/artifact'; // Import your new dependency
+
 
 const color = new chalk.Instance({level: 1})
 
@@ -559,4 +563,46 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
     await setCheckRunOutput(text, 'complete')
     //core.notice(text, {title: 'Autograding complete'})
   }
+
+  let finalScore = 0;
+  let finalMaxScore = 0;
+
+
+  if (hasPoints) {
+    finalScore = points;
+    finalMaxScore = availablePoints;
+  } else {
+    finalScore = passed;
+    finalMaxScore = numtests;
+  }
+
+  try {
+    const payload = {
+      score: finalScore,
+      max_score: finalMaxScore
+    };
+
+    // 1. Locate the operating system's secure temp directory (e.g., /tmp on Linux)
+    const tempDir = os.tmpdir(); 
+    
+    // 2. Generate a secure file path outside the student repository workspace
+    const secureFilePath = path.join(tempDir, 'results.json');
+    
+    // 3. Write the payload file safely
+    fs.writeFileSync(secureFilePath, JSON.stringify(payload, null, 2));
+    log(`Securely generated grading payload at: ${secureFilePath}`);
+
+    // 4. Instantly upload the artifact to GitHub using the official package
+    const artifactClient = new artifact.DefaultArtifactClient();
+    const artifactName = 'classroom50-results'; // Classroom 50 searches for this name
+    const filesToUpload = [secureFilePath];
+    
+    // Use the OS temp directory as the root folder for the upload package
+    await artifactClient.uploadArtifact(artifactName, filesToUpload, tempDir);
+    log('Successfully transmitted grading payload to Classroom 50 backend.');
+
+  } catch (error: any) {
+    core.setFailed(`Autograding complete but score delivery failed: ${error.message}`);
+  }
+
 }

@@ -1,7 +1,7 @@
 {
-  "name": "autograding",
-  "version": "1.0.0",
-  "description": "A set of actions for autograding assignments with GitHub Classroom",
+  "name": "autofeedback-s",
+  "version": "1.9.0",
+  "description": "A set of actions for autograding assignments with Classroom 50",
   "main": "dist/index.js",
   "engines": {
     "node": ">=24.0.0",
@@ -28,6 +28,7 @@
   "dependencies": {
     "@actions/core": "^1.10.0",
     "@actions/github": "^6.0.0",
+    "@actions/artifact": "^2.1.0",
     "tree-kill": "^1.2.2",
     "uuid": "^9.0.0"
   },
