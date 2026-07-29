@@ -8,7 +8,6 @@ import chalk from 'chalk'
 import {fuzzySearch} from './fuzzySearch'
 import * as fs from 'fs'
 import * as path from 'path';
-import * as artifact from '@actions/artifact'; // Import your new dependency
 
 
 const color = new chalk.Instance({level: 1})
@@ -417,6 +416,16 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
   const summaryMsgs = []
   const errMsgs = []
 
+  // Per-test breakdown for the classroom50/result/v1 "tests" array.
+  // One entry is pushed per test, whether it passes or fails.
+  interface TestResultEntry {
+    'test-name': string
+    passed: boolean
+    score: number
+    'max-score': number
+  }
+  const testResults: TestResultEntry[] = []
+
   for (const test of tests) {
     if (!test.extra) {
       numtests += 1
@@ -461,6 +470,13 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
         passing.push(test.name)
         passed += 1
       }
+
+      testResults.push({
+        'test-name': test.name,
+        passed: true,
+        score: test.points || 0,
+        'max-score': test.points || 0,
+      })
     } catch (error) {
       log('')
       // Restart command processing
@@ -499,6 +515,13 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
           log(`Unknown exception: ${error}`)
         }
       }
+
+      testResults.push({
+        'test-name': test.name,
+        passed: false,
+        score: 0,
+        'max-score': test.points || 0,
+      })
     }
   }
 
@@ -564,48 +587,51 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
     //core.notice(text, {title: 'Autograding complete'})
   }
 
-  let finalScore = "0";
-  let finalMaxScore = "0";
-
+  let finalScore = 0
+  let finalMaxScore = 0
 
   if (hasPoints) {
-    finalScore = points.toString();
-    finalMaxScore = availablePoints.toString();
+    finalScore = points
+    finalMaxScore = availablePoints
   } else {
-    finalScore = passed.toString();
-    finalMaxScore = numtests.toString();
+    finalScore = passed
+    finalMaxScore = numtests
   }
 
   try {
-    // 2. Build the JSON file manually as a raw string literal to lock in double quotes
-  const strictRawJson = [
-    '{',
-    `  "score": "${finalScore}",`,
-    `  "max_score": "${finalMaxScore}"`,
-    '}'
-  ].join('\n');
+    // The runner injects these directly — classroom/assignment/owner are the
+    // identity anchor collect-scores checks against the source repo, and
+    // commit/release/review are already full URLs, so nothing here needs to
+    // be derived from GITHUB_REPOSITORY/GITHUB_SHA.
+    const result = {
+      schema: 'classroom50/result/v1',
+      classroom: process.env.CLASSROOM || '',
+      assignment: process.env.ASSIGNMENT || '',
+      assignment_type: (process.env.ASSIGNMENT_TYPE || 'individual') as
+        | 'individual'
+        | 'group',
+      owner: process.env.USERNAME || process.env.OWNER || '',
+      submission: process.env.SUBMISSION_TAG || '',
+      commit: process.env.COMMIT_URL || '',
+      release: process.env.RELEASE_URL || '',
+      review: process.env.REVIEW_URL || '',
+      datetime: new Date().toISOString(),
+      score: finalScore,
+      'max-score': finalMaxScore,
+      tests: testResults,
+    }
 
-    // 1. Locate the operating system's secure temp directory (e.g., /tmp on Linux)
-    const tempDir = os.tmpdir(); 
-    
-    // 2. Generate a secure file path outside the student repository workspace
-    const secureFilePath = path.join(tempDir, 'results.json');
-    
-    // 3. Write the payload file safely
-    fs.writeFileSync(secureFilePath, strictRawJson,'utf-8');
-    log(`Securely generated grading payload at: ${secureFilePath}`);
+    const resultJson = JSON.stringify(result, null, 2)
 
-    // 4. Instantly upload the artifact to GitHub using the official package
-    const artifactClient = new artifact.DefaultArtifactClient();
-    const artifactName = 'classroom50-results'; // Classroom 50 searches for this name
-    const filesToUpload = [secureFilePath];
-    
-    // Use the OS temp directory as the root folder for the upload package
-    await artifactClient.uploadArtifact(artifactName, filesToUpload, tempDir);
-    log('Successfully transmitted grading payload to Classroom 50 backend.');
-
+    // Working directory is the student's checkout, and result.json is
+    // required to land there as a relative "./result.json".
+    const resultFilePath = path.join(cwd, 'result.json')
+    fs.writeFileSync(resultFilePath, resultJson, 'utf-8')
+    log(`Wrote grading payload to: ${resultFilePath}`)
   } catch (error: any) {
-    core.setFailed(`Autograding complete but score delivery failed: ${error.message}`);
+    // A failure to produce result.json is an infrastructure error, not a
+    // grading outcome — setFailed (non-zero exit) is the correct signal here,
+    // distinct from pass/fail info which belongs inside result.json itself.
+    core.setFailed(`Autograding complete but score delivery failed: ${error.message}`)
   }
-
 }

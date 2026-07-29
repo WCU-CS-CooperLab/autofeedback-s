@@ -1,0 +1,22 @@
+{
+  "schema": "classroom50/result/v1",
+  "classroom": "",
+  "assignment": "",
+  "assignment_type": "individual",
+  "owner": "",
+  "submission": "",
+  "commit": "",
+  "release": "",
+  "review": "",
+  "datetime": "2026-07-29T21:13:44.847Z",
+  "score": 0,
+  "max-score": 7,
+  "tests": [
+    {
+      "test-name": "Hello Test",
+      "passed": false,
+      "score": 0,
+      "max-score": 7
+    }
+  ]
+}
