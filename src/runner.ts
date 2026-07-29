@@ -555,7 +555,7 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
     //Failing tests: ${failing}`
     //log(color.bold.bgCyan.black(text))
     log(color.bold.bgCyan.black(text))
-    core.setOutput('Points', `${passed}/(${numtests}`)
+    core.setOutput('Points', `${passed}/${numtests}`)
     await setCheckRunOutput(text, 'complete')
     //core.notice(text, {title: 'Autograding complete'})
   }
