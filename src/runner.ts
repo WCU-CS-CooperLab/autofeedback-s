@@ -564,16 +564,16 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
     //core.notice(text, {title: 'Autograding complete'})
   }
 
-  let finalScore = 0;
-  let finalMaxScore = 0;
+  let finalScore = "0";
+  let finalMaxScore = "0";
 
 
   if (hasPoints) {
-    finalScore = points;
-    finalMaxScore = availablePoints;
+    finalScore = points.toString();
+    finalMaxScore = availablePoints.toString();
   } else {
-    finalScore = passed;
-    finalMaxScore = numtests;
+    finalScore = passed.toString();
+    finalMaxScore = numtests.toString();
   }
 
   try {
