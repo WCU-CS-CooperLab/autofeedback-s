@@ -33030,6 +33030,8 @@ class TestTimeoutError extends TestError {
 }
 exports.TestTimeoutError = TestTimeoutError;
 class TestOutputError extends TestError {
+    expected;
+    actual;
     constructor(message, expected, actual) {
         super(`${message}
     Expected Regular Expression (regex) Match:
