@@ -577,10 +577,13 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
   }
 
   try {
-    const payload = {
-      score: finalScore,
-      max_score: finalMaxScore
-    };
+    // 2. Build the JSON file manually as a raw string literal to lock in double quotes
+  const strictRawJson = [
+    '{',
+    `  "score": "${finalScore}",`,
+    `  "max_score": "${finalMaxScore}"`,
+    '}'
+  ].join('\n');
 
     // 1. Locate the operating system's secure temp directory (e.g., /tmp on Linux)
     const tempDir = os.tmpdir(); 
@@ -589,7 +592,7 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
     const secureFilePath = path.join(tempDir, 'results.json');
     
     // 3. Write the payload file safely
-    fs.writeFileSync(secureFilePath, JSON.stringify(payload, null, 2));
+    fs.writeFileSync(secureFilePath, strictRawJson,'utf-8');
     log(`Securely generated grading payload at: ${secureFilePath}`);
 
     // 4. Instantly upload the artifact to GitHub using the official package
