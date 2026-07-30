@@ -63,7 +63,7 @@ jobs:
           ghc Prog6Tests
           ghc -o test Prog6.o Prog6Tests.o
 
-      - uses: WCU-CS-CooperLab/autofeedback-s@v1.13
+      - uses: WCU-CS-CooperLab/autofeedback-s@v1.14
         id: autograder
         continue-on-error: true
 

@@ -721,10 +721,22 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
     const releaseBodyPath = path.join(cwd, 'release-body.md')
     fs.writeFileSync(releaseBodyPath, releaseBody, 'utf-8')
     log(`Wrote release body to: ${releaseBodyPath} (status: ${status})`)
+
+    // autograde.yaml's set-latest job, the "Post commit status" step, and
+    // the "Publish submission release" step all key off
+    // steps.autograde.outputs.status/summary. Without these, that output
+    // is always empty — set-latest's condition
+    // (needs.grade.outputs.status == 'success' || ... == 'failure')
+    core.setOutput('status', status)
+    core.setOutput('summary', summary)
   } catch (error: any) {
-    // A failure to produce result.json is an infrastructure error, not a
-    // grading outcome — setFailed (non-zero exit) is the correct signal here,
-    // distinct from pass/fail info which belongs inside result.json itself.
+    // Set failure when results.json isn't created.
+    // Still emit status/summary outputs (matching runner.py's error() path)
+    // so "Post commit status" reports something specific instead of falling
+    // back to its own generic default
+    const errorSummary = `classroom50 autograde: ${error.message}`
+    core.setOutput('status', 'error')
+    core.setOutput('summary', errorSummary)
     core.setFailed(`Autograding complete but score delivery failed: ${error.message}`)
   }
 }
