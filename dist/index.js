@@ -33602,20 +33602,44 @@ const runAll = async (tests, cwd) => {
         finalMaxScore = numtests;
     }
     try {
-        // The runner injects these directly — classroom/assignment/owner are the
-        // identity anchor collect-scores checks against the source repo, and
-        // commit/release/review are already full URLs, so nothing here needs to
-        // be derived from GITHUB_REPOSITORY/GITHUB_SHA.
+        // autofeedback-s is invoked directly as an Action step in autograde.yaml
+        // — runner.py is never in this loop, so USERNAME/COMMIT_URL/RELEASE_URL/
+        // ASSIGNMENT_TYPE (which only ever existed because runner.py injected
+        // them into a subprocess it spawned) are NOT available here. Everything
+        // below is derived instead from the standard GITHUB_* context vars every
+        // step gets for free, plus MODE (which IS in the grade job's own env:
+        // block, sourced from assignments.json). Getting `owner` wrong/empty is
+        // what silently drops a submission from collect-scores — that field is
+        // the identity anchor it validates against the source repo.
+        const repoSlug = process.env.GITHUB_REPOSITORY || '';
+        const owner = process.env.GITHUB_REPOSITORY_OWNER || repoSlug.split('/')[0] || '';
+        const serverUrl = process.env.GITHUB_SERVER_URL || 'https://github.com';
+        const sha = process.env.GITHUB_SHA || '';
+        const submissionTag = process.env.SUBMISSION_TAG || '';
+        const assignmentType = process.env.MODE === 'group' ? 'group' : 'individual';
+        // The release doesn't exist yet at grading time (it's created by a
+        // later workflow step, from this very result.json) — so this is the
+        // predictable URL a submit/* tag's release resolves to once created,
+        // not a lookup. GitHub Release tag URLs percent-encode '/' as %2F.
+        const releaseUrl = repoSlug && submissionTag
+            ? `${serverUrl}/${repoSlug}/releases/tag/${encodeURIComponent(submissionTag)}`
+            : '';
+        const commitUrl = repoSlug && sha ? `${serverUrl}/${repoSlug}/commit/${sha}` : '';
         const result = {
             schema: 'classroom50/result/v1',
             classroom: process.env.CLASSROOM || '',
             assignment: process.env.ASSIGNMENT || '',
-            assignment_type: (process.env.ASSIGNMENT_TYPE || 'individual'),
-            owner: process.env.USERNAME || process.env.OWNER || '',
-            submission: process.env.SUBMISSION_TAG || '',
-            commit: process.env.COMMIT_URL || '',
-            release: process.env.RELEASE_URL || '',
-            review: process.env.REVIEW_URL || '',
+            assignment_type: assignmentType,
+            owner,
+            submission: submissionTag,
+            commit: commitUrl,
+            release: releaseUrl,
+            // TODO: a true starter->graded-commit diff needs the baseline commit
+            // (the one that added .classroom50.yaml), which isn't resolved
+            // anywhere in this bridge yet — same gap as baseline-sha/head-sha for
+            // the Feedback PR step. Falling back to the commit URL for now rather
+            // than leaving this empty.
+            review: commitUrl,
             datetime: new Date().toISOString(),
             score: finalScore,
             'max-score': finalMaxScore,
