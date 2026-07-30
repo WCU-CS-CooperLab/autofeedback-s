@@ -33612,7 +33612,7 @@ const runAll = async (tests, cwd) => {
         // what silently drops a submission from collect-scores — that field is
         // the identity anchor it validates against the source repo.
         const repoSlug = process.env.GITHUB_REPOSITORY || '';
-        const owner = process.env.GITHUB_REPOSITORY_OWNER || repoSlug.split('/')[0] || '';
+        const owner = process.env.GITHUB_ACTOR || repoSlug.split('/')[0] || '';
         const serverUrl = process.env.GITHUB_SERVER_URL || 'https://github.com';
         const sha = process.env.GITHUB_SHA || '';
         const submissionTag = process.env.SUBMISSION_TAG || '';
