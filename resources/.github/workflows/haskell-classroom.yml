@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: haskell-actions/setup@v2.10.4
         with:
           ghc-version: 9.10.1
@@ -63,7 +63,7 @@ jobs:
           ghc Prog6Tests
           ghc -o test Prog6.o Prog6Tests.o
 
-      - uses: WCU-CS-CooperLab/autofeedback-s@v1.9
+      - uses: WCU-CS-CooperLab/autofeedback-s@v1.13
         id: autograder
         continue-on-error: true
 

@@ -33049,6 +33049,48 @@ exports.TestOutputError = TestOutputError;
 const log = (text) => {
     process.stdout.write(text + os.EOL);
 };
+const deriveStatusAndSummary = (result) => {
+    const tests = result.tests || [];
+    const score = result.score || 0;
+    const maxScore = result['max-score'] || 0;
+    const assignment = result.assignment || 'assignment';
+    if (tests.length === 0) {
+        return [
+            'success',
+            `classroom50 autograde: submitted — no autograder configured for ${assignment}`,
+        ];
+    }
+    const passedCount = tests.filter((t) => t.passed).length;
+    const total = tests.length;
+    if (passedCount === total) {
+        return ['success', `classroom50 autograde: ${score}/${maxScore} (all tests passed)`];
+    }
+    return [
+        'failure',
+        `classroom50 autograde: ${score}/${maxScore} (${passedCount}/${total} tests passed)`,
+    ];
+};
+const renderReleaseBody = (result, summary) => {
+    const score = result.score || 0;
+    const maxScore = result['max-score'] || 0;
+    const tests = result.tests || [];
+    const lines = [`### classroom50 autograde: ${score}/${maxScore}`, ''];
+    if (tests.length > 0) {
+        lines.push('| Test | Result | Score |');
+        lines.push('|---|---|---|');
+        for (const t of tests) {
+            const ok = t.passed ? 'PASS' : 'FAIL';
+            const testName = (t['test-name'] || '').replace(/\|/g, '\\|');
+            lines.push(`| ${testName} | ${ok} | ${t.score || 0} / ${t['max-score'] || 0} |`);
+        }
+        lines.push('');
+        lines.push(`Status: ${summary}`);
+    }
+    else {
+        lines.push(`_${summary}_`);
+    }
+    return lines.join('\n') + '\n';
+};
 const normalizeLineEndings = (text) => {
     return text.replace(/\r\n/gi, '\n').trim();
 };
@@ -33420,13 +33462,23 @@ const runAll = async (tests, cwd) => {
             if (!test.extra) {
                 passing.push(test.name);
                 passed += 1;
+                // default to 1/1 if there are no points
+                testResults.push({
+                    'test-name': test.name,
+                    passed: true,
+                    score: test.points || 1,
+                    'max-score': test.points || 1,
+                });
             }
-            testResults.push({
-                'test-name': test.name,
-                passed: true,
-                score: test.points || 0,
-                'max-score': test.points || 0,
-            });
+            else {
+                // max score is 0 on extra credit
+                testResults.push({
+                    'test-name': test.name,
+                    passed: true,
+                    score: test.points || 1,
+                    'max-score': 0,
+                });
+            }
         }
         catch (error) {
             log('');
@@ -33464,13 +33516,21 @@ const runAll = async (tests, cwd) => {
                     //core.error(eMsg, eAnn)
                     log(`Unknown exception: ${error}`);
                 }
+                testResults.push({
+                    'test-name': test.name,
+                    passed: false,
+                    score: 0,
+                    'max-score': test.points || 1,
+                });
             }
-            testResults.push({
-                'test-name': test.name,
-                passed: false,
-                score: 0,
-                'max-score': test.points || 0,
-            });
+            else {
+                testResults.push({
+                    'test-name': test.name,
+                    passed: false,
+                    score: 0,
+                    'max-score': 0,
+                });
+            }
         }
     }
     if (failed) {
@@ -33567,6 +33627,17 @@ const runAll = async (tests, cwd) => {
         const resultFilePath = path.join(cwd, 'result.json');
         fs.writeFileSync(resultFilePath, resultJson, 'utf-8');
         log(`Wrote grading payload to: ${resultFilePath}`);
+        // release-body.md is optional per the contract (the runner synthesizes
+        // it when absent), but ported here for parity with runner.py so
+        // submissions graded through this bridge get the same Markdown body —
+        // score line + per-test table — as ones graded straight through
+        // runner.py, instead of falling back to whatever generic body the
+        // runner synthesizes for "autograder produced no release-body.md".
+        const [status, summary] = deriveStatusAndSummary(result);
+        const releaseBody = renderReleaseBody(result, summary);
+        const releaseBodyPath = path.join(cwd, 'release-body.md');
+        fs.writeFileSync(releaseBodyPath, releaseBody, 'utf-8');
+        log(`Wrote release body to: ${releaseBodyPath} (status: ${status})`);
     }
     catch (error) {
         // A failure to produce result.json is an infrastructure error, not a
