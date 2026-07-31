@@ -33612,7 +33612,12 @@ const runAll = async (tests, cwd) => {
         // what silently drops a submission from collect-scores — that field is
         // the identity anchor it validates against the source repo.
         const repoSlug = process.env.GITHUB_REPOSITORY || '';
-        const owner = process.env.GITHUB_ACTOR || repoSlug.split('/')[0] || '';
+        // NOT GITHUB_REPOSITORY_OWNER — classroom50 repos are org-owned
+        // (e.g. WCU-CS-CooperLab/wcu-csc-240-hw0-testing-cooplogic), so that var
+        // is always the org login, never the student. The student's identity
+        // lives in the repo NAME suffix, not repo ownership. GITHUB_ACTOR (who
+        // triggered this run) is the student for a normal individual submission.
+        const owner = process.env.USERNAME || process.env.GITHUB_ACTOR || '';
         const serverUrl = process.env.GITHUB_SERVER_URL || 'https://github.com';
         const sha = process.env.GITHUB_SHA || '';
         const submissionTag = process.env.SUBMISSION_TAG || '';
@@ -33625,6 +33630,31 @@ const runAll = async (tests, cwd) => {
             ? `${serverUrl}/${repoSlug}/releases/tag/${encodeURIComponent(submissionTag)}`
             : '';
         const commitUrl = repoSlug && sha ? `${serverUrl}/${repoSlug}/commit/${sha}` : '';
+        // %Y-%m-%dT%H:%M:%SZ — no fractional seconds. runner.py uses this exact
+        // format for both datetime and graded_at; toISOString()'s milliseconds
+        // (".161Z") don't match it, which is plausibly what a stricter
+        // date-parsing consumer (e.g. a submissions-list view sorting on this
+        // field) silently chokes on where a simple score readout wouldn't.
+        const formatTimestamp = (d) => d.toISOString().replace(/\.\d{3}Z$/, 'Z');
+        // datetime is meant to be the SUBMISSION instant — the graded commit's
+        // committer date, invariant across regrades — not "whenever this run
+        // happened to execute". Read it straight from git rather than the API
+        // (avoids needing a token for this): the checkout already has full
+        // history (fetch-depth: 0). graded_at is genuinely "now", separately.
+        let submittedAt;
+        try {
+            submittedAt = (0, child_process_1.execFileSync)('git', ['show', '-s', '--format=%cI', sha || 'HEAD'], { cwd, encoding: 'utf-8' }).trim();
+        }
+        catch (error) {
+            log(`Could not read committer date via git, falling back to now: ${error.message}`);
+            submittedAt = new Date().toISOString();
+        }
+        const datetime = formatTimestamp(new Date(submittedAt));
+        const gradedAt = formatTimestamp(new Date());
+        const actorId = process.env.GITHUB_ACTOR_ID;
+        const submittedBy = process.env.GITHUB_ACTOR
+            ? { username: process.env.GITHUB_ACTOR, id: actorId ? Number(actorId) : null }
+            : undefined;
         const result = {
             schema: 'classroom50/result/v1',
             classroom: process.env.CLASSROOM || '',
@@ -33640,7 +33670,9 @@ const runAll = async (tests, cwd) => {
             // the Feedback PR step. Falling back to the commit URL for now rather
             // than leaving this empty.
             review: commitUrl,
-            datetime: new Date().toISOString(),
+            datetime,
+            graded_at: gradedAt,
+            ...(submittedBy ? { submitted_by: submittedBy } : {}),
             score: finalScore,
             'max-score': finalMaxScore,
             tests: testResults,
