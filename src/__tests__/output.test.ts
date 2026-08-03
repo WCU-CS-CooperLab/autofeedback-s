@@ -2,6 +2,7 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import {setCheckRunOutput} from '../output'
 import nock from 'nock'
+import type {GitHub} from '@actions/github/lib/utils'
 
 beforeEach(() => {
   jest.resetModules()
@@ -33,7 +34,7 @@ beforeEach(() => {
         listForSuite: jest.fn().mockResolvedValue({
           data: {
             total_count: 1,
-            check_runs: [{id: 222222}],
+            check_runs: [{id: 222222,name: 'grade / Autograding'}],
           },
         }),
         update: jest.fn().mockResolvedValue({}),
@@ -41,7 +42,7 @@ beforeEach(() => {
     },
   }
 
-  jest.spyOn(github, 'getOctokit').mockReturnValue(mockOctokit as any)
+  jest.spyOn(github, 'getOctokit').mockReturnValue(mockOctokit as unknown as InstanceType<typeof GitHub>)
 })
 
 afterEach(() => {

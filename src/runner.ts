@@ -7,8 +7,11 @@ import * as os from 'os'
 import chalk from 'chalk'
 import {fuzzySearch} from './fuzzySearch'
 import * as fs from 'fs'
-import * as path from 'path';
+import * as path from 'path'
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
 
 const color = new chalk.Instance({level: 1})
 
@@ -86,10 +89,7 @@ const deriveStatusAndSummary = (result: ResultPayload): [string, string] => {
   const assignment = result.assignment || 'assignment'
 
   if (tests.length === 0) {
-    return [
-      'success',
-      `classroom50 autograde: submitted — no autograder configured for ${assignment}`,
-    ]
+    return ['success', `classroom50 autograde: submitted — no autograder configured for ${assignment}`]
   }
 
   const passedCount = tests.filter((t) => t.passed).length
@@ -97,10 +97,7 @@ const deriveStatusAndSummary = (result: ResultPayload): [string, string] => {
   if (passedCount === total) {
     return ['success', `classroom50 autograde: ${score}/${maxScore} (all tests passed)`]
   }
-  return [
-    'failure',
-    `classroom50 autograde: ${score}/${maxScore} (${passedCount}/${total} tests passed)`,
-  ]
+  return ['failure', `classroom50 autograde: ${score}/${maxScore} (${passedCount}/${total} tests passed)`]
 }
 
 const renderReleaseBody = (result: ResultPayload, summary: string): string => {
@@ -548,8 +545,6 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
           'max-score': 0,
         })
       }
-
-      
     } catch (error) {
       log('')
       // Restart command processing
@@ -593,7 +588,7 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
           score: 0,
           'max-score': test.points || 1,
         })
-      } else{
+      } else {
         testResults.push({
           'test-name': test.name,
           passed: false,
@@ -601,8 +596,6 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
           'max-score': 0,
         })
       }
-
-      
     }
   }
 
@@ -705,9 +698,8 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
     // later workflow step, from this very result.json) — so this is the
     // predictable URL a submit/* tag's release resolves to once created,
     // not a lookup. GitHub Release tag URLs percent-encode '/' as %2F.
-    const releaseUrl = repoSlug && submissionTag
-      ? `${serverUrl}/${repoSlug}/releases/tag/${encodeURIComponent(submissionTag)}`
-      : ''
+    const releaseUrl =
+      repoSlug && submissionTag ? `${serverUrl}/${repoSlug}/releases/tag/${encodeURIComponent(submissionTag)}` : ''
     const commitUrl = repoSlug && sha ? `${serverUrl}/${repoSlug}/commit/${sha}` : ''
 
     // %Y-%m-%dT%H:%M:%SZ — no fractional seconds. runner.py uses this exact
@@ -724,13 +716,9 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
     // history (fetch-depth: 0). graded_at is genuinely "now", separately.
     let submittedAt: string
     try {
-      submittedAt = execFileSync(
-        'git',
-        ['show', '-s', '--format=%cI', sha || 'HEAD'],
-        {cwd, encoding: 'utf-8'},
-      ).trim()
-    } catch (error: any) {
-      log(`Could not read committer date via git, falling back to now: ${error.message}`)
+      submittedAt = execFileSync('git', ['show', '-s', '--format=%cI', sha || 'HEAD'], {cwd, encoding: 'utf-8'}).trim()
+    } catch (error: unknown) {
+      log(`Could not read committer date via git, falling back to now: ${errorMessage(error)}`)
       submittedAt = new Date().toISOString()
     }
     const datetime = formatTimestamp(new Date(submittedAt))
@@ -791,14 +779,14 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
     // (needs.grade.outputs.status == 'success' || ... == 'failure')
     core.setOutput('status', status)
     core.setOutput('summary', summary)
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Set failure when results.json isn't created.
     // Still emit status/summary outputs (matching runner.py's error() path)
     // so "Post commit status" reports something specific instead of falling
     // back to its own generic default
-    const errorSummary = `classroom50 autograde: ${error.message}`
+    const errorSummary = `classroom50 autograde: ${errorMessage(error)}`
     core.setOutput('status', 'error')
     core.setOutput('summary', errorSummary)
-    core.setFailed(`Autograding complete but score delivery failed: ${error.message}`)
+    core.setFailed(`Autograding complete but score delivery failed: ${errorMessage(error)}`)
   }
 }

@@ -32950,7 +32950,7 @@ const setCheckRunOutput = async (text, suffix, level = 'notice') => {
         end_line: 1,
         annotation_level: level,
         message: chunk,
-        title: `Autograding ${suffix} (${index + 1}/${chunks.length})`,
+        title: chunks.length === 1 ? `Autograding ${suffix}` : `Autograding ${suffix} (${index + 1}/${chunks.length})`,
     }));
     //process.stdout.write(`setCheckRunOutput called\n`)
     //process.stdout.write(`Original text length: ${text.length}\n`)
@@ -33022,6 +33022,9 @@ const chalk_1 = __importDefault(__nccwpck_require__(465));
 const fuzzySearch_1 = __nccwpck_require__(4815);
 const fs = __importStar(__nccwpck_require__(9896));
 const path = __importStar(__nccwpck_require__(6928));
+function errorMessage(error) {
+    return error instanceof Error ? error.message : String(error);
+}
 const color = new chalk_1.default.Instance({ level: 1 });
 class TestError extends Error {
     constructor(message) {
@@ -33061,20 +33064,14 @@ const deriveStatusAndSummary = (result) => {
     const maxScore = result['max-score'] || 0;
     const assignment = result.assignment || 'assignment';
     if (tests.length === 0) {
-        return [
-            'success',
-            `classroom50 autograde: submitted — no autograder configured for ${assignment}`,
-        ];
+        return ['success', `classroom50 autograde: submitted — no autograder configured for ${assignment}`];
     }
     const passedCount = tests.filter((t) => t.passed).length;
     const total = tests.length;
     if (passedCount === total) {
         return ['success', `classroom50 autograde: ${score}/${maxScore} (all tests passed)`];
     }
-    return [
-        'failure',
-        `classroom50 autograde: ${score}/${maxScore} (${passedCount}/${total} tests passed)`,
-    ];
+    return ['failure', `classroom50 autograde: ${score}/${maxScore} (${passedCount}/${total} tests passed)`];
 };
 const renderReleaseBody = (result, summary) => {
     const score = result.score || 0;
@@ -33632,9 +33629,7 @@ const runAll = async (tests, cwd) => {
         // later workflow step, from this very result.json) — so this is the
         // predictable URL a submit/* tag's release resolves to once created,
         // not a lookup. GitHub Release tag URLs percent-encode '/' as %2F.
-        const releaseUrl = repoSlug && submissionTag
-            ? `${serverUrl}/${repoSlug}/releases/tag/${encodeURIComponent(submissionTag)}`
-            : '';
+        const releaseUrl = repoSlug && submissionTag ? `${serverUrl}/${repoSlug}/releases/tag/${encodeURIComponent(submissionTag)}` : '';
         const commitUrl = repoSlug && sha ? `${serverUrl}/${repoSlug}/commit/${sha}` : '';
         // %Y-%m-%dT%H:%M:%SZ — no fractional seconds. runner.py uses this exact
         // format for both datetime and graded_at; toISOString()'s milliseconds
@@ -33652,7 +33647,7 @@ const runAll = async (tests, cwd) => {
             submittedAt = (0, child_process_1.execFileSync)('git', ['show', '-s', '--format=%cI', sha || 'HEAD'], { cwd, encoding: 'utf-8' }).trim();
         }
         catch (error) {
-            log(`Could not read committer date via git, falling back to now: ${error.message}`);
+            log(`Could not read committer date via git, falling back to now: ${errorMessage(error)}`);
             submittedAt = new Date().toISOString();
         }
         const datetime = formatTimestamp(new Date(submittedAt));
@@ -33713,10 +33708,10 @@ const runAll = async (tests, cwd) => {
         // Still emit status/summary outputs (matching runner.py's error() path)
         // so "Post commit status" reports something specific instead of falling
         // back to its own generic default
-        const errorSummary = `classroom50 autograde: ${error.message}`;
+        const errorSummary = `classroom50 autograde: ${errorMessage(error)}`;
         core.setOutput('status', 'error');
         core.setOutput('summary', errorSummary);
-        core.setFailed(`Autograding complete but score delivery failed: ${error.message}`);
+        core.setFailed(`Autograding complete but score delivery failed: ${errorMessage(error)}`);
     }
 };
 exports.runAll = runAll;

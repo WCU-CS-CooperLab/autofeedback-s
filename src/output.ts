@@ -22,7 +22,7 @@ export const setCheckRunOutput = async (
   if (!token || token === '') return
 
   // Create the octokit client
-  const octokit = (github as any).getOctokit(token)
+  const octokit = github.getOctokit(token)
   if (!octokit) return
 
   // The environment contains a variable for current repository. The repository
@@ -59,8 +59,8 @@ export const setCheckRunOutput = async (
     repo,
     check_suite_id: checkSuiteId,
   })
-  const candidates = checkRunsResponse.data.check_runs.filter((run: { name: string }) =>
-    run.name === 'Autograding' || run.name.endsWith('/ Autograding'),
+  const candidates = checkRunsResponse.data.check_runs.filter(
+    (run: {name: string}) => run.name === 'Autograding' || run.name.endsWith('/ Autograding'),
   )
   const checkRun = candidates.length === 1 && candidates[0]
   if (!checkRun) return
@@ -79,7 +79,7 @@ export const setCheckRunOutput = async (
     end_line: 1,
     annotation_level: level,
     message: chunk,
-    title: `Autograding ${suffix} (${index + 1}/${chunks.length})`,
+    title: chunks.length === 1 ? `Autograding ${suffix}` : `Autograding ${suffix} (${index + 1}/${chunks.length})`,
   }))
 
   //process.stdout.write(`setCheckRunOutput called\n`)
