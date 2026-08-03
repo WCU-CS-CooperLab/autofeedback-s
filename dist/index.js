@@ -32922,13 +32922,19 @@ const setCheckRunOutput = async (text, suffix, level = 'notice') => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const checkSuiteUrl = workflowRunResponse.data.check_suite_url;
     const checkSuiteId = parseInt(checkSuiteUrl.match(/[0-9]+$/)[0], 10);
+    // When this action runs inside a reusable workflow invoked as a job
+    // (e.g. shim.yaml's `grade:` job calling classroom-runner-workflow-wcu-standard.yaml),
+    // GitHub names the check run "<caller job id> / <called job's name>" — e.g.
+    // "grade / Autograding" — not "grade/Autograding". The caller job id isn't
+    // guaranteed (a different shim could name its job something else), so match
+    // on the job name suffix rather than hardcoding the full prefixed name.
     const checkRunsResponse = await octokit.rest.checks.listForSuite({
         owner,
         repo,
-        check_name: 'grade/Autograding',
         check_suite_id: checkSuiteId,
     });
-    const checkRun = checkRunsResponse.data.total_count === 1 && checkRunsResponse.data.check_runs[0];
+    const candidates = checkRunsResponse.data.check_runs.filter((run) => run.name === 'Autograding' || run.name.endsWith('/ Autograding'));
+    const checkRun = candidates.length === 1 && candidates[0];
     if (!checkRun)
         return;
     // Split text into chunks of 65,000 characters max
