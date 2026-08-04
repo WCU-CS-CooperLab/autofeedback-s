@@ -170,7 +170,6 @@ const compareLines = (actualLine: string, expectedLine: string): string => {
 }
 
 const waitForExit = async (child: ChildProcess, timeout: number): Promise<void> => {
-  // eslint-disable-next-line no-undef
   return new Promise((resolve, reject) => {
     let timedOut = false
 
@@ -237,9 +236,9 @@ const runSetup = async (test: Test, cwd: string, timeout: number): Promise<void>
     } else if (error instanceof TestError) {
       throw new TestError(output + '\n' + error.message)
     } else if (error instanceof Error) {
-      throw new Error(output + '\n' + error.message)
+      throw new Error(output + '\n' + error.message, {cause: error})
     } else {
-      throw new Error(output + '\nUnknown ERROR: ' + `${error}`)
+      throw new Error(output + '\nUnknown ERROR: ' + `${error}`, {cause: error})
     }
   }
 }
@@ -290,9 +289,9 @@ const runCommand = async (test: Test, cwd: string, timeout: number) => {
     } else if (error instanceof TestError) {
       throw new TestError(output + '\n' + error.message)
     } else if (error instanceof Error) {
-      throw new Error(output + '\n' + error.message)
+      throw new Error(output + '\n' + error.message, {cause: error})
     } else {
-      throw new Error(output + '\nUnknown ERROR: ' + `${error}`)
+      throw new Error(output + '\nUnknown ERROR: ' + `${error}`, {cause: error})
     }
   }
 
@@ -327,15 +326,13 @@ const runCommand = async (test: Test, cwd: string, timeout: number) => {
     }
     let cActual = ``
     let cExpected = ``
-    let expectedLine = ``
-    let actualLine = ``
 
     result.push(``)
     // Look at each line
     if (linesExpected.length == linesActual.length) {
       for (let i = 0; i < minLines; i++) {
-        expectedLine = linesExpected[i]
-        actualLine = linesActual[i]
+        const expectedLine = linesExpected[i]
+        const actualLine = linesActual[i]
 
         if (actualLine == expectedLine) {
           result.push(`🟩Line ` + i + `\tExpected: "` + expectedLine + `"`)
@@ -373,9 +370,9 @@ const runCommand = async (test: Test, cwd: string, timeout: number) => {
     } else {
       result.push(`comparing each line of expected output against each line of actual output`)
       for (let k = 0; k < linesExpected.length; ++k) {
-        expectedLine = linesExpected[k]
+        const expectedLine = linesExpected[k]
         for (let l = 0; l < linesActual.length; ++l) {
-          actualLine = linesActual[l]
+          const actualLine = linesActual[l]
           const compare = compareLines(actualLine, expectedLine)
           result.push(`expected line ` + k + ` actual line ` + l)
           result.push(compare)
@@ -661,18 +658,17 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
     //core.notice(text, {title: 'Autograding complete'})
   }
 
-  let finalScore = 0
-  let finalMaxScore = 0
-
-  if (hasPoints) {
-    finalScore = points
-    finalMaxScore = availablePoints
-  } else {
-    finalScore = passed
-    finalMaxScore = numtests
-  }
-
   try {
+    let finalScore = 0
+    let finalMaxScore = 0
+
+    if (hasPoints) {
+      finalScore = points
+      finalMaxScore = availablePoints
+    } else {
+      finalScore = passed
+      finalMaxScore = numtests
+    }
     // autofeedback-s is invoked directly as an Action step in autograde.yaml
     // — runner.py is never in this loop, so USERNAME/COMMIT_URL/RELEASE_URL/
     // ASSIGNMENT_TYPE (which only ever existed because runner.py injected

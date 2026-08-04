@@ -1,7 +1,8 @@
 import * as core from '@actions/core'
-import fs from 'fs'
 import path from 'path'
 import {Test, runAll} from './runner.js'
+import { pathToFileURL } from 'url';
+
 
 const run = async (): Promise<void> => {
   try {
@@ -10,7 +11,12 @@ const run = async (): Promise<void> => {
       throw new Error('No GITHUB_WORKSPACE')
     }
 
-    const data = fs.readFileSync(path.resolve(cwd, '.github/classroom/autograding.json'))
+    // Construct a file:// URL dynamically so ncc ignores it
+    const jsonPath = path.resolve(cwd, '.github/classroom/autograding.json');
+    const fileUrl = pathToFileURL(jsonPath).href;
+
+    // Load the external file strictly at runtime
+    const {default: data} = await import(fileUrl, { with: { type: 'json' } });
     const json = JSON.parse(data.toString())
 
     await runAll(json.tests as Array<Test>, cwd)

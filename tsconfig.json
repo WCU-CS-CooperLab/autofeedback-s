@@ -4,6 +4,9 @@
     "moduleResolution": "NodeNext",
     "target": "esnext",
     "lib": ["esnext"],
+    "types": ["node", "jest"],
+    "rootDir": "./src",
+    "isolatedModules": true,
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -15,4 +18,5 @@
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules"]
+  
 }

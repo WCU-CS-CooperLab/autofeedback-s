@@ -30914,6 +30914,25 @@ module.exports = {
 
 /***/ }),
 
+/***/ 8780:
+/***/ ((module) => {
+
+function webpackEmptyAsyncContext(req) {
+	// Here Promise.resolve().then() is used instead of new Promise() to prevent
+	// uncaught exception popping up in devtools
+	return Promise.resolve().then(() => {
+		var e = new Error("Cannot find module '" + req + "'");
+		e.code = 'MODULE_NOT_FOUND';
+		throw e;
+	});
+}
+webpackEmptyAsyncContext.keys = () => ([]);
+webpackEmptyAsyncContext.resolve = webpackEmptyAsyncContext;
+webpackEmptyAsyncContext.id = 8780;
+module.exports = webpackEmptyAsyncContext;
+
+/***/ }),
+
 /***/ 2613:
 /***/ ((module) => {
 
@@ -31528,7 +31547,6 @@ function escapeProperty(s) {
 const external_crypto_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("crypto");
 ;// CONCATENATED MODULE: external "fs"
 const external_fs_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("fs");
-var external_fs_default = /*#__PURE__*/__nccwpck_require__.n(external_fs_namespaceObject);
 ;// CONCATENATED MODULE: ./node_modules/@actions/core/lib/file-command.js
 // For internal use, subject to change.
 // We use any as a valid input type
@@ -31566,6 +31584,7 @@ function file_command_prepareKeyValueMessage(key, value) {
 //# sourceMappingURL=file-command.js.map
 ;// CONCATENATED MODULE: external "path"
 const external_path_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("path");
+var external_path_default = /*#__PURE__*/__nccwpck_require__.n(external_path_namespaceObject);
 // EXTERNAL MODULE: external "http"
 var external_http_ = __nccwpck_require__(8611);
 // EXTERNAL MODULE: external "https"
@@ -39440,7 +39459,6 @@ const compareLines = (actualLine, expectedLine) => {
     return result.join(external_os_.EOL);
 };
 const waitForExit = async (child, timeout) => {
-    // eslint-disable-next-line no-undef
     return new Promise((resolve, reject) => {
         let timedOut = false;
         const exitTimeout = setTimeout(() => {
@@ -39502,10 +39520,10 @@ const runSetup = async (test, cwd, timeout) => {
             throw new TestError(output + '\n' + error.message);
         }
         else if (error instanceof Error) {
-            throw new Error(output + '\n' + error.message);
+            throw new Error(output + '\n' + error.message, { cause: error });
         }
         else {
-            throw new Error(output + '\nUnknown ERROR: ' + `${error}`);
+            throw new Error(output + '\nUnknown ERROR: ' + `${error}`, { cause: error });
         }
     }
 };
@@ -39551,10 +39569,10 @@ const runCommand = async (test, cwd, timeout) => {
             throw new TestError(output + '\n' + error.message);
         }
         else if (error instanceof Error) {
-            throw new Error(output + '\n' + error.message);
+            throw new Error(output + '\n' + error.message, { cause: error });
         }
         else {
-            throw new Error(output + '\nUnknown ERROR: ' + `${error}`);
+            throw new Error(output + '\nUnknown ERROR: ' + `${error}`, { cause: error });
         }
     }
     // Eventually work off the the test type
@@ -39588,14 +39606,12 @@ const runCommand = async (test, cwd, timeout) => {
         }
         let cActual = ``;
         let cExpected = ``;
-        let expectedLine = ``;
-        let actualLine = ``;
         result.push(``);
         // Look at each line
         if (linesExpected.length == linesActual.length) {
             for (let i = 0; i < minLines; i++) {
-                expectedLine = linesExpected[i];
-                actualLine = linesActual[i];
+                const expectedLine = linesExpected[i];
+                const actualLine = linesActual[i];
                 if (actualLine == expectedLine) {
                     result.push(`🟩Line ` + i + `\tExpected: "` + expectedLine + `"`);
                     result.push(`🟩Line ` + i + `\t  Actual: "` + actualLine + `"`);
@@ -39634,9 +39650,9 @@ const runCommand = async (test, cwd, timeout) => {
         else {
             result.push(`comparing each line of expected output against each line of actual output`);
             for (let k = 0; k < linesExpected.length; ++k) {
-                expectedLine = linesExpected[k];
+                const expectedLine = linesExpected[k];
                 for (let l = 0; l < linesActual.length; ++l) {
-                    actualLine = linesActual[l];
+                    const actualLine = linesActual[l];
                     const compare = compareLines(actualLine, expectedLine);
                     result.push(`expected line ` + k + ` actual line ` + l);
                     result.push(compare);
@@ -39893,17 +39909,17 @@ const runAll = async (tests, cwd) => {
         await setCheckRunOutput(text, 'complete');
         //core.notice(text, {title: 'Autograding complete'})
     }
-    let finalScore = 0;
-    let finalMaxScore = 0;
-    if (hasPoints) {
-        finalScore = points;
-        finalMaxScore = availablePoints;
-    }
-    else {
-        finalScore = passed;
-        finalMaxScore = numtests;
-    }
     try {
+        let finalScore = 0;
+        let finalMaxScore = 0;
+        if (hasPoints) {
+            finalScore = points;
+            finalMaxScore = availablePoints;
+        }
+        else {
+            finalScore = passed;
+            finalMaxScore = numtests;
+        }
         // autofeedback-s is invoked directly as an Action step in autograde.yaml
         // — runner.py is never in this loop, so USERNAME/COMMIT_URL/RELEASE_URL/
         // ASSIGNMENT_TYPE (which only ever existed because runner.py injected
@@ -40014,6 +40030,8 @@ const runAll = async (tests, cwd) => {
     }
 };
 
+;// CONCATENATED MODULE: external "url"
+const external_url_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("url");
 ;// CONCATENATED MODULE: ./src/autograding.ts
 
 
@@ -40025,7 +40043,11 @@ const autograding_run = async () => {
         if (!cwd) {
             throw new Error('No GITHUB_WORKSPACE');
         }
-        const data = external_fs_default().readFileSync(__nccwpck_require__.ab + "autofeedback-s/" + cwd + '/.github/classroom/autograding.json');
+        // Construct a file:// URL dynamically so ncc ignores it
+        const jsonPath = external_path_default().resolve(cwd, '.github/classroom/autograding.json');
+        const fileUrl = (0,external_url_namespaceObject.pathToFileURL)(jsonPath).href;
+        // Load the external file strictly at runtime
+        const { default: data } = await __nccwpck_require__(8780)(fileUrl);
         const json = JSON.parse(data.toString());
         await runAll(json.tests, cwd);
     }
