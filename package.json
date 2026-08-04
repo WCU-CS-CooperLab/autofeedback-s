@@ -28,7 +28,7 @@
   "dependencies": {
     "@actions/core": "^1.10.0",
     "@actions/github": "^9.1.1",
-    "@actions/artifact": "^2.1.0",
+    "@actions/artifact": "^6.2.1",
     "tree-kill": "^1.2.2",
     "uuid": "^14.0.0"
   },
