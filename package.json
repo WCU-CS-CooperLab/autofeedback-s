@@ -15,7 +15,7 @@
   },
   "scripts": {
     "prebuild": "rm -rf dist",
-    "build": "tsc --noEmit && ncc build src/autograding.ts -o dist --target es2023",
+    "build": "tsc --noEmit && ncc build src/autograding.ts -o dist --target es2023 --transpile-only -e fs -e @actions/core -e @actions/github",
     "test": "tsc --noEmit && node --experimental-vm-modules node_modules/.bin/jest",
     "lint": "eslint . --ext .ts"
   },
