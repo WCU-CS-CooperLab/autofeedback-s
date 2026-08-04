@@ -47,7 +47,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^4.2.1",
     "jest": "^30.4.2",
-    "nock": "^13.2.9",
+    "nock": "^14.0.17",
     "prettier": "^3.9.6",
     "ts-jest": "^29.0.3",
     "typescript": "^7.0.2"
