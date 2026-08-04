@@ -34,7 +34,7 @@ beforeEach(() => {
         listForSuite: jest.fn().mockResolvedValue({
           data: {
             total_count: 1,
-            check_runs: [{id: 222222,name: 'grade / Autograding'}],
+            check_runs: [{id: 222222, name: 'grade / Autograding'}],
           },
         }),
         update: jest.fn().mockResolvedValue({}),

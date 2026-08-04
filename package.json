@@ -1,6 +1,6 @@
 {
   "name": "autofeedback-s",
-  "version": "3.0.0",
+  "version": "3.2.0",
   "description": "A set of actions for autograding assignments with Classroom 50",
   "main": "dist/index.js",
   "engines": {
