@@ -1,48 +1,67 @@
-import * as core from '@actions/core'
-import * as github from '@actions/github'
-import {setCheckRunOutput} from '../output.js'
 import nock from 'nock'
 import type {GitHub} from '@actions/github/lib/utils'
+import {jest} from '@jest/globals'
+
+// Declare mocks up front
+const mockGetInput = jest.fn<(name: string) => string>()
+const mockSetOutput = jest.fn()
+const mockGetOctokit = jest.fn()
+
+jest.unstable_mockModule('@actions/core', () => ({
+  getInput: mockGetInput,
+  setOutput: mockSetOutput,
+}))
+
+jest.unstable_mockModule('@actions/github', () => ({
+  getOctokit: mockGetOctokit,
+}))
+
+// Import AFTER mocking, so setCheckRunOutput picks up the mocked modules
+const {setCheckRunOutput} = await import('../output.js')
 
 beforeEach(() => {
-  jest.resetModules()
   jest.restoreAllMocks()
 
-  jest.spyOn(core, 'getInput').mockImplementation((name: string): string => {
+  mockGetInput.mockImplementation((name: string): string => {
     if (name === 'token') return '12345'
     return ''
   })
 
-  jest.spyOn(core, 'setOutput').mockImplementation(() => {
+  mockSetOutput.mockImplementation(() => {
     return
   })
 
   process.env['GITHUB_REPOSITORY'] = 'example/repository'
   process.env['GITHUB_RUN_ID'] = '98765'
 
-  // Mock GitHub client
   const mockOctokit = {
     rest: {
       actions: {
-        getWorkflowRun: jest.fn().mockResolvedValue({
+        getWorkflowRun: jest.fn<() => Promise<{data: {check_suite_url: string}}>>().mockResolvedValue({
           data: {
             check_suite_url: 'https://api.github.com/repos/example/repository/check-suites/111111',
           },
         }),
       },
       checks: {
-        listForSuite: jest.fn().mockResolvedValue({
-          data: {
-            total_count: 1,
-            check_runs: [{id: 222222, name: 'grade / Autograding'}],
-          },
-        }),
-        update: jest.fn().mockResolvedValue({}),
+        listForSuite: jest
+          .fn<
+            () => Promise<{
+              data: {total_count: number; check_runs: {id: number; name: string}[]}
+            }>
+          >()
+          .mockResolvedValue({
+            data: {
+              total_count: 1,
+              check_runs: [{id: 222222, name: 'grade / Autograding'}],
+            },
+          }),
+        update: jest.fn<() => Promise<Record<string, never>>>().mockResolvedValue({}),
       },
     },
   }
 
-  jest.spyOn(github, 'getOctokit').mockReturnValue(mockOctokit as unknown as InstanceType<typeof GitHub>)
+  mockGetOctokit.mockReturnValue(mockOctokit as unknown as InstanceType<typeof GitHub>)
 })
 
 afterEach(() => {

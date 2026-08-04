@@ -15,7 +15,7 @@
   },
   "scripts": {
     "build": "tsc --noEmit && ncc build src/autograding.ts -o dist --target es2023",
-    "test": "tsc --noEmit && jest",
+    "test": "tsc --noEmit && node --experimental-vm-modules node_modules/.bin/jest",
     "lint": "eslint . --ext .ts"
   },
   "keywords": [

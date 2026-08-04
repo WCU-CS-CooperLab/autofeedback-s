@@ -1,14 +1,55 @@
 import path from 'path'
-import * as core from '@actions/core'
-import {run, runAll, TestComparison} from '../runner.js'
+import {jest} from '@jest/globals'
+import {fileURLToPath} from 'url'
+import type {TestComparison} from '../runner.js'
+
+const fileName = fileURLToPath(import.meta.url)
+const dirName = path.dirname(fileName)
+
+const mockSetOutput = jest.fn<(name: string, value: string) => void>()
+const mockGetInput = jest.fn<(name: string) => string>()
+
+const mockSummary = {
+  addRaw: jest.fn().mockReturnThis(),
+  addHeading: jest.fn().mockReturnThis(),
+  addBreak: jest.fn().mockReturnThis(),
+  addTable: jest.fn().mockReturnThis(),
+  addCodeBlock: jest.fn().mockReturnThis(),
+  addList: jest.fn().mockReturnThis(),
+  addLink: jest.fn().mockReturnThis(),
+  addSeparator: jest.fn().mockReturnThis(),
+  addEOL: jest.fn().mockReturnThis(),
+  write: jest.fn<() => Promise<void>>().mockResolvedValue(undefined),
+  clear: jest.fn().mockReturnThis(),
+  stringify: jest.fn().mockReturnValue(''),
+  isEmptyBuffer: jest.fn().mockReturnValue(true),
+  emptyBuffer: jest.fn().mockReturnThis(),
+}
+
+jest.unstable_mockModule('@actions/core', () => ({
+  setOutput: mockSetOutput,
+  getInput: mockGetInput,
+  summary: mockSummary,
+}))
+
+const {run, runAll} = await import('../runner.js')
+//type TestComparison = InstanceType<typeof TestComparison> extends never
+//  ? 'included' | 'regex' | 'exact'
+//  : never // fallback if TestComparison is a type, see note below
 
 beforeEach(() => {
   // resetModules allows you to safely change the environment and mock imports
   // separately in each of your tests
   jest.resetModules()
   jest.restoreAllMocks()
-  jest.spyOn(core, 'setOutput').mockImplementation(() => {
+  mockSetOutput.mockImplementation(() => {
     return
+  })
+  mockGetInput.mockImplementation((name: string): string => {
+    if (name == name) {
+      return ''
+    }
+    return ''
   })
 })
 
@@ -16,7 +57,7 @@ describe('runner', () => {
   // The most basic test is just checking that the run method doesn't throw an error.
   // This test relies on our default payload.
   it('matches included output', async () => {
-    const cwd = path.resolve(__dirname, 'java')
+    const cwd = path.resolve(dirName, 'java')
     const test = {
       name: 'Hello Test',
       setup: 'javac Hello.java',
@@ -31,7 +72,7 @@ describe('runner', () => {
   }, 10000)
 
   it('matches regex output', async () => {
-    const cwd = path.resolve(__dirname, 'java')
+    const cwd = path.resolve(dirName, 'java')
     const test = {
       name: 'Hello Test',
       setup: 'javac Hello.java',
@@ -46,7 +87,7 @@ describe('runner', () => {
   }, 10000)
 
   it('matches exact output', async () => {
-    const cwd = path.resolve(__dirname, 'java')
+    const cwd = path.resolve(dirName, 'java')
     const test = {
       name: 'Hello Test',
       setup: 'javac Hello.java',
@@ -61,7 +102,7 @@ describe('runner', () => {
   }, 10000)
 
   it('raises an error when output does not include the value', async () => {
-    const cwd = path.resolve(__dirname, 'java')
+    const cwd = path.resolve(dirName, 'java')
     const test = {
       name: 'Hello Test',
       setup: 'javac Hello.java',
@@ -76,7 +117,7 @@ describe('runner', () => {
   }, 10000)
 
   it('can read shell output', async () => {
-    const cwd = path.resolve(__dirname, 'shell')
+    const cwd = path.resolve(dirName, 'shell')
     const test = {
       name: 'Hello Test',
       setup: '',
@@ -91,7 +132,7 @@ describe('runner', () => {
   }, 10000)
 
   it('does not compare when there is no expected input and no expected output', async () => {
-    const cwd = path.resolve(__dirname, 'shell')
+    const cwd = path.resolve(dirName, 'shell')
     const test = {
       name: 'Hello Test',
       setup: '',
@@ -108,7 +149,7 @@ describe('runner', () => {
   it('prints the stdout', async () => {
     const stdoutSpy = jest.spyOn(process.stdout, 'write')
 
-    const cwd = path.resolve(__dirname, 'shell')
+    const cwd = path.resolve(dirName, 'shell')
     const test = {
       name: 'Hello Test',
       setup: '',
@@ -127,7 +168,7 @@ describe('runner', () => {
   it('prints the stderr', async () => {
     const stderrSpy = jest.spyOn(process.stderr, 'write')
 
-    const cwd = path.resolve(__dirname, 'shell')
+    const cwd = path.resolve(dirName, 'shell')
     const test = {
       name: 'Hello Test',
       setup: '',
@@ -145,7 +186,7 @@ describe('runner', () => {
 
   it('does not share the env', async () => {
     const stdoutSpy = jest.spyOn(process.stdout, 'write')
-    const cwd = path.resolve(__dirname, 'shell')
+    const cwd = path.resolve(dirName, 'shell')
     const test = {
       name: 'Secret Test',
       setup: '',
@@ -163,7 +204,7 @@ describe('runner', () => {
   }, 10000)
 
   it('runs jest', async () => {
-    const cwd = path.resolve(__dirname, 'jest')
+    const cwd = path.resolve(dirName, 'jest')
     const test = {
       name: 'Hello Test',
       setup: 'npm install',
@@ -180,7 +221,7 @@ describe('runner', () => {
 
 describe('runAll', () => {
   it('counts the points', async () => {
-    const cwd = path.resolve(__dirname, 'shell')
+    const cwd = path.resolve(dirName, 'shell')
     const tests = [
       {
         name: 'Hello Test',
@@ -195,13 +236,12 @@ describe('runAll', () => {
     ]
 
     // Expect the points to be in the output
-    const setOutputSpy = jest.spyOn(core, 'setOutput')
     await expect(runAll(tests, cwd)).resolves.not.toThrow()
-    expect(setOutputSpy).toHaveBeenCalledWith('Points', '7/7')
+    expect(mockSetOutput).toHaveBeenCalledWith('Points', '7/7')
   }, 10000)
 
   it('counts extra credit points', async () => {
-    const cwd = path.resolve(__dirname, 'shell')
+    const cwd = path.resolve(dirName, 'shell')
     const tests = [
       {
         name: 'Regular credit Test',
@@ -238,13 +278,12 @@ describe('runAll', () => {
     ]
 
     // Expect the points to be in the output
-    const setOutputSpy = jest.spyOn(core, 'setOutput')
     await expect(runAll(tests, cwd)).resolves.not.toThrow()
-    expect(setOutputSpy).toHaveBeenCalledWith('Points', '10/7')
+    expect(mockSetOutput).toHaveBeenCalledWith('Points', '10/7')
   }, 10000)
 
   it('gets 0 points if it fails', async () => {
-    const cwd = path.resolve(__dirname, 'shell')
+    const cwd = path.resolve(dirName, 'shell')
     const tests = [
       {
         name: 'Hello Test',
@@ -259,8 +298,7 @@ describe('runAll', () => {
     ]
 
     // Expect the points to be in the output
-    const setOutputSpy = jest.spyOn(core, 'setOutput')
     await expect(runAll(tests, cwd)).resolves.not.toThrow()
-    expect(setOutputSpy).toHaveBeenCalledWith('Points', '0/7')
+    expect(mockSetOutput).toHaveBeenCalledWith('Points', '0/7')
   }, 10000)
 })
