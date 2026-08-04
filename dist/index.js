@@ -30914,7 +30914,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 8780:
+/***/ 433:
 /***/ ((module) => {
 
 function webpackEmptyAsyncContext(req) {
@@ -30928,7 +30928,7 @@ function webpackEmptyAsyncContext(req) {
 }
 webpackEmptyAsyncContext.keys = () => ([]);
 webpackEmptyAsyncContext.resolve = webpackEmptyAsyncContext;
-webpackEmptyAsyncContext.id = 8780;
+webpackEmptyAsyncContext.id = 433;
 module.exports = webpackEmptyAsyncContext;
 
 /***/ }),
@@ -40037,17 +40037,33 @@ const external_url_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.met
 
 
 
+//import {createRequire} from 'module'
 const autograding_run = async () => {
     try {
         const cwd = process.env['GITHUB_WORKSPACE'];
         if (!cwd) {
             throw new Error('No GITHUB_WORKSPACE');
         }
-        // Construct a file:// URL dynamically so ncc ignores it
-        const jsonPath = external_path_default().resolve(cwd, '.github/classroom/autograding.json');
+        // 1. Establish the base directory safely
+        let baseDir = cwd || process.env.GITHUB_WORKSPACE || process.cwd();
+        // 2. Fix the duplication: If the path already ends with '.github/classroom', back out to the root
+        if (baseDir.includes('.github/classroom')) {
+            baseDir = baseDir.split('.github/classroom')[0];
+        }
+        // 3. Resolve cleanly to a absolute path
+        const jsonPath = external_path_default().resolve(baseDir, '.github/classroom/autograding.json');
+        // 4. Convert to URL for your working ESM import strategy
         const fileUrl = (0,external_url_namespaceObject.pathToFileURL)(jsonPath).href;
-        // Load the external file strictly at runtime
-        const { default: data } = await __nccwpck_require__(8780)(fileUrl);
+        // 5. Run your successful dynamic import
+        let data;
+        try {
+            const module = await __nccwpck_require__(433)(fileUrl);
+            data = module.default;
+        }
+        catch {
+            const module = await __nccwpck_require__(433)(fileUrl);
+            data = module.default;
+        }
         const json = JSON.parse(data.toString());
         await runAll(json.tests, cwd);
     }
