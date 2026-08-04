@@ -23,7 +23,7 @@ const run = async (): Promise<void> => {
     } else {
       console.error('Unknown exception')
     }
-    core.setFailed(`Autograding failure: ${error}`)// 1. Establish the base directory safely
+    core.setFailed(`Autograding failure: ${error}`)
   }
 }
 
