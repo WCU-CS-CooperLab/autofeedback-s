@@ -11,8 +11,17 @@ const run = async (): Promise<void> => {
     if (!cwd) {
       throw new Error('No GITHUB_WORKSPACE')
     }
+    // 1. Break up the target string into an array.
+    // This stops ncc from tracking the literal file path at build time.
+    const pathSegments = ['.github', 'classroom', 'autograding.json']
 
-    const data = fs.readFileSync(path.resolve(cwd, '.github/classroom/autograding.json'))
+    // 2. Resolve the path normally.
+    const targetPath = path.resolve(cwd, ...pathSegments)
+
+    // 3. Use bracket notation to read the file.
+    // This stops ncc from rewriting the path execution context during bundling.
+    const readMethod = 'readFileSync'
+    const data = fs[readMethod](targetPath)
     const json = JSON.parse(data.toString())
 
     await runAll(json.tests as Array<Test>, cwd)

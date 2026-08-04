@@ -31566,6 +31566,7 @@ function file_command_prepareKeyValueMessage(key, value) {
 //# sourceMappingURL=file-command.js.map
 ;// CONCATENATED MODULE: external "path"
 const external_path_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("path");
+var external_path_default = /*#__PURE__*/__nccwpck_require__.n(external_path_namespaceObject);
 // EXTERNAL MODULE: external "http"
 var external_http_ = __nccwpck_require__(8611);
 // EXTERNAL MODULE: external "https"
@@ -40024,7 +40025,15 @@ const autograding_run = async () => {
         if (!cwd) {
             throw new Error('No GITHUB_WORKSPACE');
         }
-        const data = external_fs_default().readFileSync(__nccwpck_require__.ab + "autofeedback-s/" + cwd + '/.github/classroom/autograding.json');
+        // 1. Break up the target string into an array.
+        // This stops ncc from tracking the literal file path at build time.
+        const pathSegments = ['.github', 'classroom', 'autograding.json'];
+        // 2. Resolve the path normally. 
+        const targetPath = external_path_default().resolve(cwd, ...pathSegments);
+        // 3. Use bracket notation to read the file.
+        // This stops ncc from rewriting the path execution context during bundling.
+        const readMethod = 'readFileSync';
+        const data = (external_fs_default())[readMethod](targetPath);
         const json = JSON.parse(data.toString());
         await runAll(json.tests, cwd);
     }
