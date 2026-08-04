@@ -1,9 +1,9 @@
 import path from 'path'
 import * as core from '@actions/core'
-import * as github from '@actions/github'
-import {WebhookPayload} from '@actions/github/lib/interfaces'
+import {context} from '@actions/github'
+import {PushEvent} from '@octokit/webhooks-types'
 import nock from 'nock'
-import run from '../autograding'
+import run from '../autograding.js'
 
 beforeEach(() => {
   // resetModules allows you to safely change the environment and mock imports
@@ -21,9 +21,8 @@ beforeEach(() => {
   process.env['GITHUB_WORKSPACE'] = path.resolve(__dirname, 'java')
   process.env['GITHUB_REPOSITORY'] = 'example/repository'
 
-  // Create a mock payload for our tests to use
-  // https://developer.github.com/v3/activity/events/types/#issuecommentevent
-  github.context.payload = {
+  // Mock the context payload specifically
+  jest.spyOn(context, 'payload', 'get').mockReturnValue({
     ref: 'refs/tags/simple-tag',
     before: '6113728f27ae82c7b1a177c8d03f9e96e0adf246',
     after: '0000000000000000000000000000000000000000',
@@ -38,9 +37,17 @@ beforeEach(() => {
         email: '21031067+Codertocat@users.noreply.github.com',
         login: 'Codertocat',
         id: 21031067,
+        type: 'User', // Required by Octokit types
+        html_url: '',
+        url: '',
       },
+      // Add minimal missing required fields to satisfy the compiler
+      html_url: '',
+      description: null,
+      fork: false,
+      url: '',
     },
-  } as WebhookPayload
+  } as unknown as PushEvent) // Use PushEvent since this layout mimics a Git Tag/Push event
 })
 
 afterEach(() => {

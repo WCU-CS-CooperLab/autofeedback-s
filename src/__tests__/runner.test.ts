@@ -1,6 +1,6 @@
 import path from 'path'
 import * as core from '@actions/core'
-import {run, runAll, TestComparison} from '../runner'
+import {run, runAll, TestComparison} from '../runner.js'
 
 beforeEach(() => {
   // resetModules allows you to safely change the environment and mock imports

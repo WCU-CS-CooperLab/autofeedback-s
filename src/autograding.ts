@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import fs from 'fs'
 import path from 'path'
-import {Test, runAll} from './runner'
+import {Test, runAll} from './runner.js'
 
 const run = async (): Promise<void> => {
   try {

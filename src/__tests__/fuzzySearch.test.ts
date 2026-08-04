@@ -1,4 +1,4 @@
-import {fuzzySearch} from '../fuzzySearch'
+import {fuzzySearch} from '../fuzzySearch.js'
 
 describe('fuzzySearch', () => {
   it('finds a close word in a group of words', async () => {
