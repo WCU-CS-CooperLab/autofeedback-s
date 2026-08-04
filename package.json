@@ -30,7 +30,7 @@
     "@actions/github": "^6.0.0",
     "@actions/artifact": "^2.1.0",
     "tree-kill": "^1.2.2",
-    "uuid": "^9.0.0"
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@types/jest": "^29.2.0",
